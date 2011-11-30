@@ -1,0 +1,6 @@
+remove Lock = Eisu_toggle
+remove Control = Control_L
+keysym Eisu_toggle = Control_L
+keysym Control_L = Super_L
+add Control = Control_L
+add Mod4 = Super_L
