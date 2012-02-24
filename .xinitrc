@@ -7,4 +7,5 @@ urxvtd -q -f -o &
 xsetroot -cursor_name left_ptr
 setxkbmap -layout jp
 xmodmap $HOME/.Xmodmap
+xcompmgr &
 exec ck-launch-session xmonad
