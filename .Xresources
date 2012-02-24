@@ -1,0 +1,9 @@
+URxvt.transparent: true
+URxvt.shading: 10
+URxvt.font: xft:Ricty:size=12
+URxvt.perl-ext-common: default,tabbed
+URxvt.inputMethod: ibus
+URxvt.foreground: green
+URxvt.background: black
+URxvt.urlLauncher: firefox
+URxvt.scrollBar: off
