@@ -15,3 +15,8 @@ promptinit
 prompt suse
 # End of lines added by compinstall
 
+if [ ! $TMUX ]; then
+  tmux
+  exit
+fi
+

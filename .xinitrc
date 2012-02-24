@@ -6,4 +6,5 @@ ibus-daemon -x -d
 urxvtd -q -f -o &
 xsetroot -cursor_name left_ptr
 setxkbmap -layout jp
+xmodmap $HOME/.Xmodmap
 exec ck-launch-session xmonad
