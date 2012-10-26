@@ -1,30 +1,29 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 import XMonad
 import XMonad.Config.Gnome
-import XMonad.Config.Desktop
-import XMonad.Layout.Tabbed
-import XMonad.Util.EZConfig
 import XMonad.Hooks.DynamicLog
 
-import Control.OldException
+import XMonad.Config.Desktop (desktopLayoutModifiers)
 
-import DBus
-import DBus.Connection
-import DBus.Message
+import XMonad.Layout.Tabbed
+import XMonad.Layout.Spiral
 
-main = withConnection Session $ \dbus -> do
+import qualified DBus as D
+import qualified DBus.Client as D
+import qualified Codec.Binary.UTF8.String as UTF8
+
+main :: IO ()
+main = do
+    dbus <- D.connectSession
     getWellKnownName dbus
     xmonad $ gnomeConfig
-        { terminal = "urxvtc"
-        , modMask = mod4Mask
-        , layoutHook = desktopLayoutModifiers (simpleTabbed ||| Tall 1 (3 / 100) (1 / 2))
-        , manageHook = manageHook gnomeConfig
-        , logHook = dynamicLogWithPP (prettyPrinter dbus)
-        } `additionalKeysP` 
-            [ ("M-p", spawn "dmenu_run")
-            , ("M-S-q", spawn "gnome-session-quit --power-off")
-            ]
+         { logHook = dynamicLogWithPP (prettyPrinter dbus)
+         , modMask = mod4Mask
+         , layoutHook = desktopLayoutModifiers $ simpleTabbed ||| spiral (6/7)
+         }
 
-prettyPrinter :: Connection -> PP
+prettyPrinter :: D.Client -> PP
 prettyPrinter dbus = defaultPP
     { ppOutput = dbusOutput dbus
     , ppTitle = pangoSanitize
@@ -36,22 +35,18 @@ prettyPrinter dbus = defaultPP
     , ppSep = " "
     }
 
-getWellKnownName :: Connection -> IO ()
-getWellKnownName dbus = tryGetName `catchDyn` (\(DBus.Error _ _) -> getWellKnownName dbus)
-  where
-    tryGetName = do
-        namereq <- newMethodCall serviceDBus pathDBus interfaceDBus "RequestName"
-        addArgs namereq [String "org.xmonad.Log", Word32 5]
-        sendWithReplyAndBlock dbus namereq 0
-        return ()
+getWellKnownName :: D.Client -> IO ()
+getWellKnownName dbus = do
+  D.requestName dbus (D.busName_ "org.xmonad.Log")
+                [D.nameAllowReplacement, D.nameReplaceExisting, D.nameDoNotQueue]
+  return ()
 
-dbusOutput :: Connection -> String -> IO ()
+dbusOutput :: D.Client -> String -> IO ()
 dbusOutput dbus str = do
-    msg <- newSignal "/org/xmonad/Log" "org.xmonad.Log" "Update"
-    addArgs msg [String ("<b>" ++ str ++ "</b>")]
-    -- If the send fails, ignore it.
-    send dbus msg 0 `catchDyn` (\(DBus.Error _ _) -> return 0)
-    return ()
+    let signal = (D.signal "/org/xmonad/Log" "org.xmonad.Log" "Update") {
+            D.signalBody = [D.toVariant ("<b>" ++ (UTF8.decodeString str) ++ "</b>")]
+        }
+    D.emit dbus signal
 
 pangoColor :: String -> String -> String
 pangoColor fg = wrap left right
@@ -61,10 +56,4 @@ pangoColor fg = wrap left right
 
 pangoSanitize :: String -> String
 pangoSanitize = foldr sanitize ""
-  where
-    sanitize '>' xs = "&gt;" ++ xs
-    sanitize '<' xs = "&lt;" ++ xs
-    sanitize '\"' xs = "&quot;" ++ xs
-    sanitize '&' xs = "&amp;" ++ xs
-    sanitize x xs = x:xs
-
+       
