@@ -4,8 +4,7 @@ HISTSIZE=1000
 SAVEHIST=1000
 bindkey -e
 # End of lines configured by zsh-newuser-install
-# The following lines were added by compinstall
-zstyle :compinstall filename '/home/halcat0x15a/.zshrc'
+# The following lines were added by compinstall'
 
 autoload -Uz compinit
 compinit
