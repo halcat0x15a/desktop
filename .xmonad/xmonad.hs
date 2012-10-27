@@ -40,7 +40,7 @@ getWellKnownName dbus = do
   D.requestName dbus (D.busName_ "org.xmonad.Log")
                 [D.nameAllowReplacement, D.nameReplaceExisting, D.nameDoNotQueue]
   return ()
-
+  
 dbusOutput :: D.Client -> String -> IO ()
 dbusOutput dbus str = do
     let signal = (D.signal "/org/xmonad/Log" "org.xmonad.Log" "Update") {
@@ -56,4 +56,10 @@ pangoColor fg = wrap left right
 
 pangoSanitize :: String -> String
 pangoSanitize = foldr sanitize ""
-       
+  where
+    sanitize '>' xs = "&gt;" ++ xs
+    sanitize '<' xs = "&lt;" ++ xs
+    sanitize '\"' xs = "&quot;" ++ xs
+    sanitize '&' xs = "&amp;" ++ xs
+    sanitize x xs = x:xs
+
